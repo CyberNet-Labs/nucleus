@@ -56,6 +56,11 @@ On the Mac, host discovery and MAC-address lookup work on macOS itself; Windows 
 their own equivalents (details in each tool's section below). None of these tools work on iOS or
 iPadOS, since Apple doesn't let apps read other devices' network details there.
 
+**The profile icon**, next to the copyright label in the title bar, opens a small panel for a name
+and email. There's no beta-tester account system yet, so this is stored only on your own device —
+it isn't synced anywhere. It's there so the panel's design can be tried out now; a real signed-in
+account will use the same spot later.
+
 ---
 
 ## 3. The network status card
@@ -93,16 +98,29 @@ likely running on each, and — for a handful of common ports — reads the gree
 back (its "banner"). It also flags specific ports known to be risky to leave exposed (Telnet, RDP,
 unauthenticated databases like Redis, and so on).
 
+**Target field pre-fills automatically** with your network's router/gateway address (e.g.
+`192.168.1.1`) when one can be detected — a convenient starting point since it's always reachable.
+This doesn't mean it's automatically fine to scan: on a network you don't administer (office
+Wi-Fi, a café), the router isn't necessarily yours to test just because it's convenient. Type over
+it with your actual target, and only proceed once the ownership checkbox is genuinely true.
+
 **How to use it:**
 1. Type a hostname or IP address, e.g. `scanme.nmap.org` — a host the nmap project runs
    specifically so people can test scanners like this one safely.
-2. Pick a profile: **Quick** (the ~30 most common ports), **Standard** (1–1024), or **Extended**
-   (1–5000). Quick is almost always the right first choice.
-3. Tick the ownership/permission checkbox, then **Start scan**.
+2. Pick a profile: **Quick** (the ~30 most common ports), **Standard** (1–1024), **Extended**
+   (1–5000), or **Custom** — enter your own list, e.g. `22,80,443,8000-8100` (comma-separated ports
+   and/or ranges, capped at 10,000 ports). Quick is almost always the right first choice.
+3. Each profile shows a time estimate, e.g. "30 ports · up to ~2s worst case." This is a worst-case
+   upper bound, not a prediction — it's how long the scan takes if the host answers nothing at all.
+   A responsive host is usually much faster.
+4. Tick the ownership/permission checkbox, then **Start scan**.
 
 You'll see a live count of ports scanned and ports found open, then a table of just the open ports
 — port number, state, service name, and response time. If a risky service turns up (like an open
 database port), a warning appears underneath explaining why it matters.
+
+Once a scan finishes, a **Check firewall behavior on this host** link hands the same host straight
+to Firewall Scan — see §7 for why you'd want both.
 
 **What it can't do:** this is a plain TCP connect scan — the same technique nmap calls `-sT`. It
 can't do stealth SYN scans or guess the target's operating system, both of which need direct
@@ -122,9 +140,15 @@ up as **Offline**, with how long ago they were last seen.
 1. Enter a network in CIDR form, e.g. `192.168.1.0/24` — the field pre-fills with a sensible guess
    based on your own network (see §3). The prefix must be `/24` through `/32` — at most 256
    addresses per sweep, a deliberate limit.
-2. Tick the checkbox, then **Start sweep**.
-3. Watch devices appear as they respond. When the sweep finishes, any previously-seen devices in
-   that range that didn't answer this time show up too, marked Offline.
+2. Optionally tick **Also scan for open ports on each device found** — Host Discovery and Port Scan
+   then work together in one run: every device that answers also gets a Quick-profile port scan
+   (one device at a time, after the sweep finishes), so you get devices *and* their open ports
+   without switching tools.
+3. Tick the ownership checkbox, then **Start sweep**.
+4. Watch devices appear as they respond. When the sweep finishes, any previously-seen devices in
+   that range that didn't answer this time show up too, marked Offline. If you turned on the port
+   toggle, each device's open ports (or "No open ports found") appear underneath it once its scan
+   completes — watch the status chip switch to "Scanning ports" during that phase.
 
 A **Clear device history** button resets what's remembered, if you want a fresh start.
 
@@ -188,8 +212,15 @@ You'll get three things:
 
 ## 7. Firewall Scan
 
-**What it does:** goes further than "open or closed" — it looks at *how* each port answered to
-work out what kind of firewall, if any, is in the way, and gives you a plain-language verdict:
+**How this differs from Port Scan:** Port Scan (§4) tells you *which ports are open and what's
+running on them*. Firewall Scan asks a different question — *how is this host's firewall behaving*
+— by looking at *how* each port answered (open, refused, rejected, or dropped) to work out what
+kind of filtering is in place. Same underlying technique, different question. Target field
+pre-fills with your router's address, same as Port Scan (see §4's note on that) — and once a scan
+finishes, a **Run a full port scan on this host** link hands the host over to Port Scan, so you can
+move between "what's open" and "how's it filtered" on the same target without retyping anything.
+
+**What it does:** gives you a plain-language verdict:
 
 - **"No firewall filtering seen"** — every port answered, one way or another. Nothing is quietly
   blocking traffic to this host.
