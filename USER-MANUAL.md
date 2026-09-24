@@ -60,12 +60,29 @@ iPadOS, since Apple doesn't let apps read other devices' network details there.
 
 ## 3. The network status card
 
-At the top of the CyberGuard screen (on Windows and Linux; the Mac version doesn't currently show
-this card) you'll see three figures: your device's **IP address**, its **subnet**, and whether a
-**VPN** is active. If your subnet is larger than a `/24` (256 addresses) — common on office or
-ISP-shared networks — the card also suggests the specific `/24` slice to actually scan, since Host
-Discovery can't sweep a whole huge network at once. Host Discovery's target field pre-fills with
-that suggestion automatically.
+At the top of the CyberGuard screen you'll see your device's **IP address**, its **subnet**, and
+whether a **VPN** is active. If your subnet is larger than a `/24` (256 addresses) — common on
+office or ISP-shared networks — the card also suggests the specific `/24` slice to actually scan,
+since Host Discovery can't sweep a whole huge network at once. Host Discovery's target field
+pre-fills with that suggestion automatically.
+
+**If you have more than one** of anything here — two Wi-Fi adapters, a Wi-Fi and an Ethernet
+connection both up, or two VPNs connected at once — a small row of toggle chips appears under that
+item, letting you switch which one is shown (and, for your IP/subnet, which one Host Discovery's
+suggestion is based on).
+
+**Wi-Fi Pentest Adapter row:** shown above the IP/Subnet/VPN row, on Port Scan, Host Discovery,
+Firewall Scan and Advanced Scan (not on Web Security, since that doesn't touch your local network
+hardware). It checks connected USB devices against a curated list of Wi-Fi chipsets known to
+support monitor mode/packet injection — the kind used with tools like aircrack-ng — and reports:
+
+- **Pentest-capable** — a known chipset is connected, with its name.
+- **Adapter connected** — something from a known Wi-Fi chipset vendor is connected, but the exact
+  model isn't in the list.
+- **None detected** — no such adapter found.
+
+This is detection only: it identifies hardware that's present, it doesn't enable monitor mode or
+do any capture/injection itself.
 
 ---
 
@@ -124,7 +141,11 @@ A **Clear device history** button resets what's remembered, if you want a fresh 
 
 ---
 
-## 6. Web Security Headers
+## 6. Web Security
+
+This tool has two parts, both working against a website you name.
+
+### Web Security Headers
 
 **What it does:** loads a website once and checks for six HTTP response headers that protect
 visitors — things like forcing HTTPS on return visits, restricting where scripts can load from,
@@ -137,6 +158,31 @@ and preventing the page from being embedded in a hidden frame on another site (c
 You'll get a score (e.g. "4 of 6 present") and a line-by-line breakdown — a checkmark and the
 header's actual value if it's present, or an explanation of what that header is for if it's
 missing.
+
+### Web App Security
+
+**What it does:** checks a page you name for authentication bypass and session cookie hygiene,
+using plain unauthenticated HTTP requests. There's no browser engine in the app, so it can't drive
+an actual login form — this is a set of heuristic checks, not a full penetration test of your login
+flow.
+
+**How to use it:**
+1. Enter a page you believe requires login, e.g. `example.com/dashboard`.
+2. Tick **I own this web app or have written permission to test it.**
+3. **Check web app security.**
+
+You'll get three things:
+- **Access check** — whether the page returned content directly (a possible auth bypass, flagged
+  for you to verify manually), was blocked (401/403), or redirected somewhere that looks like a
+  login page.
+- **Cookie flags** — every cookie the response set, with its Secure/HttpOnly/SameSite flags. Cookies
+  that look session-related (by name) are marked "Session-like," and missing flags on those are
+  highlighted.
+- **Session rotation note** — the app visits the page twice, in two completely separate
+  unauthenticated sessions, and checks whether session-looking cookies get a fresh value each time.
+  An identical value both times can indicate a weak/predictable session ID. This is a precondition
+  check, not a full session fixation test — a real one needs to trace the ID through an actual
+  login, which this tool doesn't automate.
 
 ---
 
@@ -205,7 +251,9 @@ specifics differ:
 | Scan log + device history | ✅ | ✅ | ✅ |
 | Device name lookup (Bonjour/NetBIOS/reverse DNS) | ✅ | ✅ | ✅ |
 | VPN-safe local scanning | Guaranteed | Best-effort | Best-effort |
-| Network status card on the CyberGuard screen | — | ✅ | ✅ |
+| Network status card, with multi-adapter/interface/VPN toggles | ✅ | ✅ | ✅ |
+| Wi-Fi pentest-adapter detection | ✅ | ✅ | ✅ |
+| Web App Security | ✅ | ✅ | ✅ |
 
 ---
 
