@@ -1,5 +1,7 @@
 # Nucleus User Manual
 
+*For version 0.2.0.0 (public beta).*
+
 Nucleus is CyberNet Labs' client app for CyberGuard, our network and web security toolkit — plus
 Lumen and Flux, which aren't built yet. This manual covers what's here today: how to install it,
 how each CyberGuard tool works, and how it differs slightly across macOS, Windows and Linux.
@@ -7,23 +9,27 @@ how each CyberGuard tool works, and how it differs slightly across macOS, Window
 This is a **beta**. Some things are rough around the edges, and a few features work slightly
 differently between platforms — noted throughout.
 
+**Only scan networks, devices and websites you own or have written permission to test.** Scanning
+something you're not authorized to test can be illegal, and it can look like an attack to the
+system you're scanning.
+
 ---
 
 ## 1. Installing and opening Nucleus
 
-Download the build for your platform from this release. All builds are currently unsigned, so
-your operating system will warn you the first time you open one — that's expected for a beta.
+Download the build for your platform from the latest release. The builds aren't signed with a
+commercial certificate yet, so your operating system will warn you the first time you open one —
+that's expected for a beta.
 
 ### macOS
-1. Unzip `Nucleus-macOS-universal.zip`. It works on both Apple Silicon and Intel Macs — one file,
-   no need to pick the right version.
-2. **Right-click the app → Open**, then confirm. (Double-clicking will just show a warning and
-   refuse to open — right-click → Open is what tells macOS you trust it.)
+1. Unzip `Nucleus-macOS-universal.zip`. It works on both Apple Silicon and Intel Macs.
+2. **Right-click the app → Open**, then confirm. (Double-clicking just shows a warning and refuses
+   to open — right-click → Open is what tells macOS you trust it.)
 
 ### Windows
 1. Download `Nucleus-windows-x64.exe`. It's self-contained — no separate .NET install needed.
-2. Windows SmartScreen will likely show a warning ("Windows protected your PC"). Click
-   **More info**, then **Run anyway**.
+2. Windows SmartScreen will likely say "Windows protected your PC". Click **More info**, then
+   **Run anyway**. The file is signed by CyberNet Labs (see Properties → Digital Signatures).
 
 ### Linux
 1. Download `Nucleus-linux-x64`.
@@ -34,264 +40,268 @@ your operating system will warn you the first time you open one — that's expec
    ```
 3. You need a desktop session (X11 or Wayland) — this is a graphical app, not a command-line tool.
 
+### Updates
+From this version on, Nucleus checks for new versions when it starts. If one is available, a banner
+offers to update: it downloads the new version, replaces the app and relaunches it. You can also
+check by hand in **Settings → Software Update**.
+
 ---
 
 ## 2. Finding your way around
 
-Every screen has the same shape: a dropdown in the title bar lets you switch between **Overview**
-and each service (currently just **CyberGuard** — Lumen and Flux are placeholder screens for now).
+**Picking a tool.** CyberGuard's tools are chosen from one dropdown — **Select Scan Type** on
+macOS, and the dropdown in the middle of the title bar on Windows and Linux. The tools are:
+Overview, Port Scan, Host Discovery, Web Security, Firewall Scan, Advanced Scan and Packet Capture.
+(On macOS, the title bar also switches between CyberGuard and the Lumen/Flux placeholder screens.)
 
-Inside CyberGuard, a second dropdown labeled **Select Scan Type** switches between the five tools
-described below. Whichever one you pick, the same three-part layout applies:
+**Easy and Advanced mode.** In **Settings** you can choose:
+- **Easy** — shows only Overview, Port Scan, Host Discovery and Web Security. A good place to start.
+- **Advanced** — shows every tool.
 
-1. **Controls** — enter a target, choose options, and an acknowledgment checkbox.
-2. **The acknowledgment checkbox** — every active scan requires you to confirm *"I own this host
-   (or network) or have written permission to scan it."* This isn't optional, and it's there for a
-   real reason: port scanning and network sweeps can look like an attack to the system you're
-   scanning, and running them against something you don't own or have permission to test can be
-   illegal depending on where you are. Only scan things you're actually allowed to.
-3. **Findings** — results appear here once a scan starts, updating live as it runs.
+**Session authorization.** Near the top of CyberGuard there's one switch: *"I own these targets, or
+have written permission to test them."* No scan can start until it's on. You confirm it once per
+session and it covers every tool — each tool shows a short note saying whether you're covered.
+You can add an optional **scope note** (for example, the client or engagement name). The time you
+confirmed and your scope note are recorded with every scan in the Scan Activity log (§12). The
+switch turns itself off every time the app restarts, so you confirm again each session.
 
-On the Mac, host discovery and MAC-address lookup work on macOS itself; Windows and Linux have
-their own equivalents (details in each tool's section below). None of these tools work on iOS or
-iPadOS, since Apple doesn't let apps read other devices' network details there.
+**Every tool has the same layout:** controls at the top (target, options, Start), then
+**Findings** below, updating live as the scan runs.
 
 **The profile icon**, next to the copyright label in the title bar, opens a small panel for a name
-and email. There's no beta-tester account system yet, so this is stored only on your own device —
-it isn't synced anywhere. It's there so the panel's design can be tried out now; a real signed-in
-account will use the same spot later.
+and email. There's no account system yet, so this is stored only on your own device.
+
+None of these tools work on iOS or iPadOS, since Apple doesn't let apps read other devices'
+network details there.
 
 ---
 
 ## 3. The network status card
 
-At the top of the CyberGuard screen you'll see your device's **IP address**, its **subnet**, and
-whether a **VPN** is active. If your subnet is larger than a `/24` (256 addresses) — common on
-office or ISP-shared networks — the card also suggests the specific `/24` slice to actually scan,
-since Host Discovery can't sweep a whole huge network at once. Host Discovery's target field
-pre-fills with that suggestion automatically.
+At the top of CyberGuard you'll see your device's **IP address**, its **subnet** and **gateway**
+(your router), and whether a **VPN** is active.
 
-**If you have more than one** of anything here — two Wi-Fi adapters, a Wi-Fi and an Ethernet
-connection both up, or two VPNs connected at once — a small row of toggle chips appears under that
-item, letting you switch which one is shown (and, for your IP/subnet, which one Host Discovery's
-suggestion is based on).
+**More than one network?** If you're connected to several at once — Wi-Fi plus Ethernet, or a
+tagged VLAN — a **Connected networks** list shows each one with its own subnet and gateway. Toggle
+chips let you choose which one is shown — and choosing one also makes every scan go out through
+that network, so you can deliberately test through a specific VLAN or VPN.
 
-**Wi-Fi Pentest Adapter row:** shown above the IP/Subnet/VPN row, on Port Scan, Host Discovery,
-Firewall Scan and Advanced Scan (not on Web Security, since that doesn't touch your local network
-hardware). It checks connected USB devices against a curated list of Wi-Fi chipsets known to
-support monitor mode/packet injection — the kind used with tools like aircrack-ng — and reports:
-
-- **Pentest-capable** — a known chipset is connected, with its name.
-- **Adapter connected** — something from a known Wi-Fi chipset vendor is connected, but the exact
-  model isn't in the list.
-- **None detected** — no such adapter found.
-
-This is detection only: it identifies hardware that's present, it doesn't enable monitor mode or
-do any capture/injection itself.
+**Wi-Fi Pentest Adapter row** (shown for Port Scan, Host Discovery, Firewall Scan and Advanced
+Scan): checks connected USB devices against a list of Wi-Fi chipsets known to support monitor
+mode/packet injection, and reports **Pentest-capable**, **Adapter connected** (known vendor, model
+not in the list) or **None detected**. Detection only — it doesn't enable monitor mode or capture
+anything.
 
 ---
 
-## 4. Port Scan
+## 4. Overview
 
-**What it does:** checks a list of ports on one host to see which are open, which service is
-likely running on each, and — for a handful of common ports — reads the greeting the service sends
-back (its "banner"). It also flags specific ports known to be risky to leave exposed (Telnet, RDP,
-unauthenticated databases like Redis, and so on).
+**What it does:** one card per tool showing its latest result this session — for example "3 open
+ports", "12 hosts found", "Firewall detected" or "Not run yet" — coloured green, amber or red by
+how concerning it is. A summary line shows how many tools you've run. Click any card to jump to
+that tool with its results still there.
 
-**Target field pre-fills automatically** with your network's router/gateway address (e.g.
-`192.168.1.1`) when one can be detected — a convenient starting point since it's always reachable.
-This doesn't mean it's automatically fine to scan: on a network you don't administer (office
-Wi-Fi, a café), the router isn't necessarily yours to test just because it's convenient. Type over
-it with your actual target, and only proceed once the ownership checkbox is genuinely true.
-
-**How to use it:**
-1. Type a hostname or IP address, e.g. `scanme.nmap.org` — a host the nmap project runs
-   specifically so people can test scanners like this one safely.
-2. Pick a profile: **Quick** (the ~30 most common ports), **Standard** (1–1024), **Extended**
-   (1–5000), or **Custom** — enter your own list, e.g. `22,80,443,8000-8100` (comma-separated ports
-   and/or ranges, capped at 10,000 ports). Quick is almost always the right first choice.
-3. Each profile shows a time estimate, e.g. "30 ports · up to ~2s worst case." This is a worst-case
-   upper bound, not a prediction — it's how long the scan takes if the host answers nothing at all.
-   A responsive host is usually much faster.
-4. Tick the ownership/permission checkbox, then **Start scan**.
-
-You'll see a live count of ports scanned and ports found open, then a table of just the open ports
-— port number, state, service name, and response time. If a risky service turns up (like an open
-database port), a warning appears underneath explaining why it matters.
-
-Once a scan finishes, a **Check firewall behavior on this host** link hands the same host straight
-to Firewall Scan — see §7 for why you'd want both.
-
-**What it can't do:** this is a plain TCP connect scan — the same technique nmap calls `-sT`. It
-can't do stealth SYN scans or guess the target's operating system, both of which need direct
-access to raw network packets that a regular desktop app isn't allowed.
+**Export session report:** the Overview tab has a button that saves everything scanned this
+session as a single HTML file — port scans (including full-subnet scans, host by host), discovered
+devices, the firewall verdict and open ports, web header results and the web-app access check.
+Open it in any browser, print it, or send it on.
 
 ---
 
-## 5. Host Discovery
+## 5. Port Scan
 
-**What it does:** sweeps every address in a network range and reports which ones respond, along
-with each device's MAC address, manufacturer (Apple, Samsung, TP-Link, etc. — looked up from the
-official IEEE hardware registry), and a name if the device offers one. It also remembers what it's
-found: on a later sweep of the same range, devices that used to respond but have gone quiet show
-up as **Offline**, with how long ago they were last seen.
+**What it does:** checks a list of ports on a host to see which are open, which service is likely
+running on each, and — for common ports — reads the greeting the service sends back (its
+"banner"). It flags ports that are risky to leave exposed (Telnet, RDP, unauthenticated databases
+like Redis, and so on).
 
 **How to use it:**
-1. Enter a network in CIDR form, e.g. `192.168.1.0/24` — the field pre-fills with a sensible guess
-   based on your own network (see §3). The prefix must be `/24` through `/32` — at most 256
-   addresses per sweep, a deliberate limit.
-2. Optionally tick **Also scan for open ports on each device found** — Host Discovery and Port Scan
-   then work together in one run: every device that answers also gets a Quick-profile port scan
-   (one device at a time, after the sweep finishes), so you get devices *and* their open ports
-   without switching tools.
-3. Tick the ownership checkbox, then **Start sweep**.
-4. Watch devices appear as they respond. When the sweep finishes, any previously-seen devices in
-   that range that didn't answer this time show up too, marked Offline. If you turned on the port
-   toggle, each device's open ports (or "No open ports found") appear underneath it once its scan
-   completes — watch the status chip switch to "Scanning ports" during that phase.
+1. Type a hostname or IP address, e.g. `scanme.nmap.org` — a host the Nmap project runs so people
+   can test scanners safely. The field pre-fills with your router's address as a convenient
+   starting point; that doesn't mean you're authorized to scan it.
+2. Pick a profile: **Quick** (~30 common ports), **Standard** (1–1024), **Extended** (1–5000), or
+   **Custom** — your own list, e.g. `22,80,443,8000-8100` (up to 10,000 ports). Each shows a
+   worst-case time estimate.
+3. Optionally switch on **Scan a full subnet instead of one host** and enter a network like
+   `192.168.1.0/24`: every device that answers gets port-scanned, and results appear in a table you
+   can expand host by host.
+4. Make sure session authorization is on (§2), then **Start scan**.
 
-A **Clear device history** button resets what's remembered, if you want a fresh start.
+You'll see live progress, then a table of the open ports with service, state and response time,
+and a warning under any risky service. A **Check firewall behavior on this host** link hands the
+same host to Firewall Scan (§8).
+
+**What it can't do:** this is a plain TCP connect scan (what Nmap calls `-sT`). It can't do stealth
+SYN scans or guess the operating system, which need raw packet access a regular app doesn't have.
+
+---
+
+## 6. Host Discovery
+
+**What it does:** sweeps a network range and lists every device that responds, with its MAC
+address, manufacturer (from the official IEEE registry) and name if it offers one. It remembers
+what it found: on later sweeps, devices seen for the first time get a **New** badge, and devices
+that have gone quiet show as **Offline** with when they were last seen.
+
+**How to use it:**
+1. Enter a network in CIDR form, e.g. `192.168.1.0/24` (pre-filled from your own network). Ranges
+   up to a `/16` (65,536 addresses) are allowed, with a time estimate shown — bigger ranges take
+   longer.
+2. Optionally switch on **Also scan for open ports on each device found** to get each device's
+   open ports in the same run.
+3. **Start sweep.**
+
+**Clear device history** resets what's remembered.
 
 **Why some devices show "Unknown device" or "MAC unavailable":**
-- A name only appears if the device actually announces one (over Bonjour/mDNS, NetBIOS, or a
-  router-provided reverse-DNS entry) — many phones and IoT devices don't.
-- A MAC address showing as **"private Wi-Fi address"** instead of a manufacturer name means that
-  device is using a random per-network address (a privacy feature most phones and laptops use by
-  default) — the manufacturer genuinely can't be determined from it.
-- If you're on a VPN, it can occasionally intercept local-network traffic and interfere with this
-  scan. macOS actively excludes VPN interfaces from local scans; Windows and Linux do a best-effort
-  version of the same fix (details in each platform's own documentation in the private repo) — it
-  helps in the common case but isn't a hard guarantee on those two.
+- A name only appears if the device announces one (Bonjour/mDNS, NetBIOS, or reverse DNS).
+- **"Private Wi-Fi address"** means the device uses a random per-network address (a privacy
+  feature on most phones and laptops), so the manufacturer can't be known.
+- A VPN can interfere with local scans. macOS excludes VPN interfaces automatically; Windows and
+  Linux do a best-effort version of the same.
 
 ---
 
-## 6. Web Security
+## 7. Web Security
 
-This tool has two parts, both working against a website you name.
+Two checks against a website you name.
 
 ### Web Security Headers
-
-**What it does:** loads a website once and checks for six HTTP response headers that protect
-visitors — things like forcing HTTPS on return visits, restricting where scripts can load from,
-and preventing the page from being embedded in a hidden frame on another site (clickjacking).
-
-**How to use it:**
-1. Enter a website, e.g. `cybernetlabs.cc` (no need to type `https://` — it's added automatically).
-2. **Check headers.**
-
-You'll get a score (e.g. "4 of 6 present") and a line-by-line breakdown — a checkmark and the
-header's actual value if it's present, or an explanation of what that header is for if it's
-missing.
+Loads the site once and checks six HTTP response headers that protect visitors — forcing HTTPS,
+limiting where scripts load from, blocking clickjacking, and so on. Enter a site such as
+`cybernetlabs.cc` (https is added automatically) and click **Check headers**. You get a score (e.g.
+"4 of 6 present") and a line per header: its value if present, or what it's for if missing.
 
 ### Web App Security
-
-**What it does:** checks a page you name for authentication bypass and session cookie hygiene,
-using plain unauthenticated HTTP requests. There's no browser engine in the app, so it can't drive
-an actual login form — this is a set of heuristic checks, not a full penetration test of your login
-flow.
-
-**How to use it:**
-1. Enter a page you believe requires login, e.g. `example.com/dashboard`.
-2. Tick **I own this web app or have written permission to test it.**
-3. **Check web app security.**
-
-You'll get three things:
-- **Access check** — whether the page returned content directly (a possible auth bypass, flagged
-  for you to verify manually), was blocked (401/403), or redirected somewhere that looks like a
-  login page.
-- **Cookie flags** — every cookie the response set, with its Secure/HttpOnly/SameSite flags. Cookies
-  that look session-related (by name) are marked "Session-like," and missing flags on those are
-  highlighted.
-- **Session rotation note** — the app visits the page twice, in two completely separate
-  unauthenticated sessions, and checks whether session-looking cookies get a fresh value each time.
-  An identical value both times can indicate a weak/predictable session ID. This is a precondition
-  check, not a full session fixation test — a real one needs to trace the ID through an actual
-  login, which this tool doesn't automate.
+Checks a page you name for authentication bypass and session-cookie hygiene, using plain
+unauthenticated requests (it can't log in through a form). Enter a page you believe requires login,
+e.g. `example.com/dashboard`, and click **Check web app security**. You get:
+- **Access check** — whether the page returned content without logging in (a possible bypass to
+  verify), was blocked (401/403), or redirected to a login page.
+- **Cookie flags** — each cookie's Secure/HttpOnly/SameSite flags, with missing flags on
+  session-like cookies highlighted.
+- **Session rotation** — whether session-like cookies change between two separate visits. An
+  identical value both times can mean a weak session ID.
 
 ---
 
-## 7. Firewall Scan
+## 8. Firewall Scan
 
-**How this differs from Port Scan:** Port Scan (§4) tells you *which ports are open and what's
-running on them*. Firewall Scan asks a different question — *how is this host's firewall behaving*
-— by looking at *how* each port answered (open, refused, rejected, or dropped) to work out what
-kind of filtering is in place. Same underlying technique, different question. Target field
-pre-fills with your router's address, same as Port Scan (see §4's note on that) — and once a scan
-finishes, a **Run a full port scan on this host** link hands the host over to Port Scan, so you can
-move between "what's open" and "how's it filtered" on the same target without retyping anything.
+**How it differs from Port Scan:** Port Scan asks *which ports are open*. Firewall Scan asks *how
+is this host's firewall behaving*, by looking at how each port answers — **open**, **refused** (the
+host said no), **rejected** (an "unreachable" error came back) or **dropped** (no reply at all).
 
-**What it does:** gives you a plain-language verdict:
-
-- **"No firewall filtering seen"** — every port answered, one way or another. Nothing is quietly
-  blocking traffic to this host.
-- **"Firewall rejecting traffic"** — blocked ports send back an explicit "unreachable" error
-  instead of staying silent (a reject policy).
+**The verdict:**
+- **"No firewall filtering seen"** — every port answered one way or another.
+- **"Firewall rejecting traffic"** — blocked ports send back an explicit error (a reject policy).
 - **"Firewall detected"** — a mix of silence and answers, typical of a default-deny firewall.
-- **"No ports answered"** — either the host is offline, or it's in full stealth mode.
+- **"No ports answered"** — the host is offline or fully stealthed.
 
 **How to use it:**
-1. Enter a host, pick a profile, tick the checkbox.
-2. Optionally switch on **Also test outbound rules** — this checks which ports *your own* network
-   lets you connect *out* on, by testing against `portquiz.net` (a public service built exactly
-   for this — it accepts connections on every port, so anything that fails is being blocked by
-   your network, not the far end).
-3. **Start firewall scan.**
+1. Enter a host and pick a profile.
+2. Optionally switch on **Also test outbound rules** — checks which ports *your* network lets you
+   connect *out* on, by testing against `portquiz.net` (a public service that accepts connections
+   on every port, so any failure is your network blocking it).
+3. Optionally switch on **Scan a full subnet** to check every device on a network.
+4. **Start firewall scan.**
 
-You'll see counts of Open / Refused / Rejected / Dropped ports, the verdict, and — if you turned
-on the outbound test — a second list showing which outbound ports your network allows.
+**Changes since last scan:** if you've scanned the same host before, a box shows what changed —
+ports newly blocked or newly opened since then. Firewall rules are policy, so a change is often the
+most important thing to see.
 
----
-
-## 8. Advanced Scan
-
-**What it does:** combines the features above into one run, with each piece switched on or off
-individually:
-
-- **Find devices on a network** — the Host Discovery sweep
-- **Name and MAC address** — device info for whatever's found
-- **Scan ports** — with sub-options for banners and risk checks, same as Port Scan
-- **Web security headers** — checked against any web server found on a discovered device
-
-**How to use it:** switch on whichever combination you want, fill in the target (a network range
-if "Find devices" is on, otherwise a single host), tick the checkbox, and **Start**. Results build
-up per-device as the run progresses.
-
-One limit worth knowing: if you combine "Find devices" with "Scan ports," the port list is capped
-to the Quick profile — scanning every port on every device on a whole network would otherwise take
-a very long time.
+A **Run a full port scan on this host** link hands the host to Port Scan.
 
 ---
 
-## 9. Scan Activity
+## 9. Advanced Scan
 
-Every scan you run — of any type — gets logged here: what kind, the target, a one-line summary,
-and when it ran. It's local to your device and only lasts for the current session (it clears when
-you quit the app). An **Export** button saves the whole log as a JSON file, and **Clear** empties
-it.
+Combines the tools into one run, each part switched on or off:
+- **Find devices on a network** (Host Discovery)
+- **Name and MAC address**
+- **Scan ports**, with **Service banners** and **Risk checks**
+- **Web security headers** on any web server found
+
+Fill in the target (a network if "Find devices" is on, otherwise one host) and **Start**. Results
+build up device by device. If you combine "Find devices" with "Scan ports", the port list is limited
+to Quick, since scanning every port on every device would take very long.
 
 ---
 
-## 10. Feature availability by platform
+## 10. Packet Capture
 
-All three platforms share the same five CyberGuard tools and the same overall design. A few
-specifics differ:
+**What it does:** captures live network traffic on the interface you choose and saves it as a
+standard `.pcap` file, which tools like Wireshark can open. While capturing, it shows each packet's
+time, protocol, source, destination and size, colour-coded by protocol.
+
+**Before your first capture each session**, Nucleus shows a warning: capturing traffic can record
+other people's communications, and capturing traffic you don't own or aren't authorized to capture
+can be a criminal offence (for example under South Africa's Cybercrimes Act, section 3, or the UK's
+Computer Misuse Act). Choose **I understand, start capture** to continue. Your acknowledgement is
+recorded in the Scan Activity log.
+
+**How to use it:**
+1. Pick an interface from the list.
+2. **Start capture**; **Stop capture** when done. The file is saved to your chosen folder
+   (Settings → Packet capture save location); a button opens that folder.
+3. Use the **filter** box to narrow the list — a protocol (`tcp`, `udp`, `arp`), a port (`443`) or
+   an address or text.
+4. Select a packet and choose **Follow Stream** to see just that conversation.
+5. **Statistics** show packet counts per protocol and the busiest conversations.
+
+**Permissions, per platform:**
+- **macOS** — the first time, macOS blocks access to capture devices. Click **Grant Access & Retry**
+  and enter your password once.
+- **Windows** — needs the free Npcap driver. If no interfaces are listed, click **Install Npcap**
+  and Nucleus downloads and runs the official installer. You may also need to run Nucleus as
+  Administrator.
+- **Linux** — if capture isn't permitted, use the one-click permission fix the app offers (it asks
+  for your password).
+
+This shows packet headers, not decoded payloads — for deep protocol analysis, open the saved
+`.pcap` in Wireshark.
+
+---
+
+## 11. Settings
+
+Open with the gear button. You can set:
+- **Mode** — Easy or Advanced (§2).
+- **Default scan type** — which tool opens first.
+- **Default port scan profile** — Quick, Standard or Extended.
+- **Packet capture save location**.
+- **Software Update** — current version, and **Check for Updates**.
+
+---
+
+## 12. Scan Activity
+
+Every scan of any type is logged: what kind, the target, a one-line summary and when it ran — plus
+when you confirmed session authorization and your scope note, if you gave one. The log stays on your
+device and clears when you quit the app. **Export** saves it as a JSON file; **Clear** empties it.
+
+---
+
+## 13. Feature availability by platform
 
 | | macOS | Windows | Linux |
 |---|---|---|---|
-| All 5 scan types | ✅ | ✅ | ✅ |
-| Scan log + device history | ✅ | ✅ | ✅ |
-| Device name lookup (Bonjour/NetBIOS/reverse DNS) | ✅ | ✅ | ✅ |
-| VPN-safe local scanning | Guaranteed | Best-effort | Best-effort |
-| Network status card, with multi-adapter/interface/VPN toggles | ✅ | ✅ | ✅ |
+| All seven CyberGuard tools (incl. Overview and Packet Capture) | ✅ | ✅ | ✅ |
+| Full-subnet Port Scan and Firewall Scan | ✅ | ✅ | ✅ |
+| Session authorization and capture warning | ✅ | ✅ | ✅ |
+| Session report export (HTML) | ✅ | ✅ | ✅ |
+| Automatic updates | ✅ | ✅ | ✅ |
+| Scan log and device history | ✅ | ✅ | ✅ |
+| Network status card with multiple networks/VPNs | ✅ | ✅ | ✅ |
 | Wi-Fi pentest-adapter detection | ✅ | ✅ | ✅ |
-| Web App Security | ✅ | ✅ | ✅ |
+| Pin scans to a chosen network | ✅ | ✅ | ✅ |
+| VPN-safe local scanning | Guaranteed | Best-effort | Best-effort |
+| Lumen/Flux placeholder screens | ✅ | — | — |
 
 ---
 
-## 11. Getting help
+## 14. Getting help
 
-This is an early beta — expect rough edges. If something doesn't work as described here, that's
-useful to know. CyberNet Labs owns and maintains Nucleus; this manual will be updated as the app
-changes.
+This is a beta — expect rough edges. If something doesn't work as described here, that's useful to
+know. CyberNet Labs owns and maintains Nucleus; this manual is updated as the app changes.
 
 © 2026 CyberNet Labs. All rights reserved.
